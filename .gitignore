@@ -1,0 +1,74 @@
+# Project guidelines (internal planning docs)
+guidelines/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# Build output
+dist/
+build/
+app/frontend/dist/
+app/backend/dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+.terraform.lock.hcl
+terraform/environments/*/terraform.tfvars
+!terraform/environments/*/terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Helm
+charts/
+*.tgz
+
+# Kubernetes
+kubeconfig
+kubeconfig-*
+*.kubeconfig
+
+# AWS
+.aws/credentials
+
+# Secrets / sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.yaml
+secrets.yml
+
+# Docker
+.docker/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
