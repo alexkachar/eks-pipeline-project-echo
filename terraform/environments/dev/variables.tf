@@ -17,3 +17,8 @@ variable "cluster_name" {
   type    = string
   default = "todo-app-dev"
 }
+
+variable "developer_ip" {
+  type        = string
+  description = "Developer's public IP in CIDR notation — restricts EKS public API endpoint access"
+}

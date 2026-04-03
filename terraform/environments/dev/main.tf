@@ -1,3 +1,19 @@
+module "eks" {
+  source = "../../modules/eks"
+
+  project      = var.project
+  environment  = var.environment
+  region       = var.aws_region
+  cluster_name = var.cluster_name
+
+  vpc_id             = module.vpc.vpc_id
+  vpc_cidr           = module.vpc.vpc_cidr
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  developer_ip_cidr    = var.developer_ip
+  ssm_parameter_prefix = "/${var.project}/${var.environment}"
+}
+
 module "ecr" {
   source = "../../modules/ecr"
 
