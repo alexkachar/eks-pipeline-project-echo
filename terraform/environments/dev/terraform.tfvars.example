@@ -1,0 +1,4 @@
+aws_region   = "eu-central-1"
+environment  = "dev"
+project      = "todo-app"
+cluster_name = "todo-app-dev"
