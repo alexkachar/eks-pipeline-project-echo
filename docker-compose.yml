@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: todos
+      POSTGRES_USER: todos
+      POSTGRES_PASSWORD: todos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./app/backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./app/backend
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: todos
+      DB_USER: todos
+      DB_PASSWORD: todos
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./app/frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
