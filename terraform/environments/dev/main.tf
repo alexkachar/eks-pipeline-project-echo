@@ -1,3 +1,21 @@
+module "ecr" {
+  source = "../../modules/ecr"
+
+  repositories = ["todo-app-frontend", "todo-app-backend"]
+}
+
+module "rds" {
+  source = "../../modules/rds"
+
+  project              = var.project
+  environment          = var.environment
+  vpc_id               = module.vpc.vpc_id
+  private_subnet_ids   = module.vpc.private_subnet_ids
+  db_subnet_group_name = module.vpc.db_subnet_group_name
+  db_name              = "todos"
+  db_username          = "todos"
+}
+
 module "vpc" {
   source = "../../modules/vpc"
 
