@@ -65,6 +65,24 @@ resource "aws_internet_gateway" "this" {
   tags = { Name = "${local.name_prefix}-igw" }
 }
 
+# ── NAT Gateway ───────────────────────────────────────────────────────────────
+# Single NAT in AZ-0 — sufficient for a dev/portfolio cluster.
+# Required for nodes to pull images from public registries (public.ecr.aws,
+# ghcr.io, quay.io, docker.io) that are not reachable via VPC endpoints.
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+  tags   = { Name = "${local.name_prefix}-nat-eip" }
+}
+
+resource "aws_nat_gateway" "this" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+  tags          = { Name = "${local.name_prefix}-nat" }
+
+  depends_on = [aws_internet_gateway.this]
+}
+
 # ── Route Tables ──────────────────────────────────────────────────────────────
 
 resource "aws_route_table" "public" {
@@ -78,10 +96,13 @@ resource "aws_route_table" "public" {
   tags = { Name = "${local.name_prefix}-public-rt" }
 }
 
-# Private and database route tables have no default route.
-# All AWS service traffic flows through VPC endpoints.
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.this.id
+  }
 
   tags = { Name = "${local.name_prefix}-private-rt" }
 }

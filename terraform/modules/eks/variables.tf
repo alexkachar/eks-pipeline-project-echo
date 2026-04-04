@@ -41,6 +41,11 @@ variable "ssm_parameter_prefix" {
   description = "SSM Parameter Store path prefix granted to the ESO IRSA role (e.g. /todo-app/dev)"
 }
 
+variable "arc_runner_scale_set_name" {
+  type        = string
+  description = "Name of the ARC runner scale set — must match the Helm release name used for gha-runner-scale-set (becomes the K8s service account name in arc-runners namespace)"
+}
+
 variable "node_instance_types" {
   type    = list(string)
   default = ["t3.large"]

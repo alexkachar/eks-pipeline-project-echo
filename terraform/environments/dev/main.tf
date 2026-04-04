@@ -10,8 +10,9 @@ module "eks" {
   vpc_cidr           = module.vpc.vpc_cidr
   private_subnet_ids = module.vpc.private_subnet_ids
 
-  developer_ip_cidr    = var.developer_ip
-  ssm_parameter_prefix = "/${var.project}/${var.environment}"
+  developer_ip_cidr         = var.developer_ip
+  ssm_parameter_prefix      = "/${var.project}/${var.environment}"
+  arc_runner_scale_set_name = var.arc_runner_scale_set_name
 }
 
 module "ecr" {
@@ -26,7 +27,7 @@ module "rds" {
   project              = var.project
   environment          = var.environment
   vpc_id               = module.vpc.vpc_id
-  private_subnet_ids   = module.vpc.private_subnet_ids
+  private_subnet_cidrs = module.vpc.private_subnet_cidrs
   db_subnet_group_name = module.vpc.db_subnet_group_name
   db_name              = "todos"
   db_username          = "todos"

@@ -12,12 +12,6 @@ resource "random_password" "db" {
 }
 
 # ── Security Group ────────────────────────────────────────────────────────────
-# Look up private subnet CIDRs from IDs so callers only pass subnet IDs.
-
-data "aws_subnet" "private" {
-  for_each = toset(var.private_subnet_ids)
-  id       = each.value
-}
 
 resource "aws_security_group" "rds" {
   name        = "${local.name_prefix}-rds-sg"
@@ -28,7 +22,7 @@ resource "aws_security_group" "rds" {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = [for s in data.aws_subnet.private : s.cidr_block]
+    cidr_blocks = var.private_subnet_cidrs
     description = "PostgreSQL from private subnets"
   }
 

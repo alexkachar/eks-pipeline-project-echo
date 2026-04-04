@@ -12,16 +12,18 @@ resource "aws_iam_openid_connect_provider" "this" {
 
 locals {
   oidc_issuer_host = replace(aws_iam_openid_connect_provider.this.url, "https://", "")
+
+  irsa_subjects = {
+    alb_controller = "system:serviceaccount:kube-system:aws-load-balancer-controller"
+    eso            = "system:serviceaccount:external-secrets:external-secrets"
+    arc_runner     = "system:serviceaccount:arc-runners:${var.arc_runner_scale_set_name}"
+  }
 }
 
 # ── Helper: reusable trust policy factory ─────────────────────────────────────
 
 data "aws_iam_policy_document" "irsa_trust" {
-  for_each = {
-    alb_controller = "system:serviceaccount:kube-system:aws-load-balancer-controller"
-    eso            = "system:serviceaccount:external-secrets:external-secrets"
-    arc_runner     = "system:serviceaccount:arc-runners:arc-runner-set"
-  }
+  for_each = local.irsa_subjects
 
   statement {
     effect  = "Allow"

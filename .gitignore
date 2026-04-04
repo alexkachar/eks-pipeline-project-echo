@@ -24,6 +24,7 @@ app/backend/dist/
 **/.terraform/
 *.tfstate
 *.tfstate.backup
+*.tfstate.*.backup
 *.tfstate.lock.info
 .terraform.lock.hcl
 terraform/environments/*/terraform.tfvars
