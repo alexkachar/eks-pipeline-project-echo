@@ -18,7 +18,7 @@ module "eks" {
 module "ecr" {
   source = "../../modules/ecr"
 
-  repositories = ["todo-app-frontend", "todo-app-backend"]
+  repositories = ["todo-app-frontend", "todo-app-backend", "platform-actions-runner"]
 }
 
 module "rds" {

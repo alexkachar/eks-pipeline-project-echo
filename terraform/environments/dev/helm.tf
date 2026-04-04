@@ -156,6 +156,8 @@ resource "kubernetes_service_account" "arc_runner" {
   depends_on = [kubernetes_namespace.arc_runners]
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "helm_release" "arc_runner_set" {
   name            = var.arc_runner_scale_set_name
   repository      = "oci://ghcr.io/actions/actions-runner-controller-charts"
@@ -164,26 +166,33 @@ resource "helm_release" "arc_runner_set" {
   namespace       = kubernetes_namespace.arc_runners.metadata[0].name
   cleanup_on_fail = true
 
-  set {
-    name  = "githubConfigUrl"
-    value = var.arc_github_config_url
-  }
-  set {
-    name  = "githubConfigSecret"
-    value = kubernetes_secret.arc_github_secret.metadata[0].name
-  }
-  set {
-    name  = "minRunners"
-    value = "0"
-  }
-  set {
-    name  = "maxRunners"
-    value = "5"
-  }
-  set {
-    name  = "template.spec.serviceAccountName"
-    value = kubernetes_service_account.arc_runner.metadata[0].name
-  }
+  # Use values block for the nested runner pod template — cleaner than many
+  # individual set blocks when configuring container specs and security context.
+  values = [
+    yamlencode({
+      githubConfigUrl    = var.arc_github_config_url
+      githubConfigSecret = kubernetes_secret.arc_github_secret.metadata[0].name
+      minRunners         = 0
+      maxRunners         = 5
+      template = {
+        spec = {
+          serviceAccountName = kubernetes_service_account.arc_runner.metadata[0].name
+          # runAsUser:0 is required for Kaniko to take filesystem snapshots.
+          # This is NOT the same as privileged — no extra Linux capabilities.
+          securityContext = {
+            runAsUser = 0
+          }
+          containers = [
+            {
+              name            = "runner"
+              image           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/platform-actions-runner:latest"
+              imagePullPolicy = "Always"
+            }
+          ]
+        }
+      }
+    })
+  ]
 
   depends_on = [helm_release.arc_controller, kubernetes_secret.arc_github_secret]
 }

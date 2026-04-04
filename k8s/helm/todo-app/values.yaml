@@ -43,6 +43,13 @@ ingress:
   # in eu-central-1 and paste its ARN here before running helm install.
   certificateArn: "arn:aws:acm:eu-central-1:038526103886:certificate/ceaf3854-8eca-4cf8-8e9b-f72be71fe457"
 
+# ── ARC Runner RBAC ───────────────────────────────────────────────────────────
+# Service account that is granted deploy permissions in this namespace.
+# Must match the runner scale set name and namespace configured in Terraform.
+arcRunner:
+  namespace: arc-runners
+  serviceAccountName: eks-pipeline-project-echo
+
 # ── External Secrets ───────────────────────────────────────────────────────────
 externalSecret:
   refreshInterval: 1h
