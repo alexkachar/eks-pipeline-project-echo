@@ -43,6 +43,21 @@ ingress:
   # in eu-central-1 and paste its ARN here before running helm install.
   certificateArn: "arn:aws:acm:eu-central-1:038526103886:certificate/ceaf3854-8eca-4cf8-8e9b-f72be71fe457"
 
+# ── Metrics / Observability ────────────────────────────────────────────────────
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    # How often Prometheus scrapes /metrics on the backend
+    interval: 30s
+    scrapeTimeout: 10s
+    additionalLabels:
+      release: kube-prometheus-stack
+  grafanaDashboard:
+    enabled: true
+    configMapLabel: grafana_dashboard
+    configMapLabelValue: "1"
+
 # ── ARC Runner RBAC ───────────────────────────────────────────────────────────
 # Service account that is granted deploy permissions in this namespace.
 # Must match the runner scale set name and namespace configured in Terraform.
