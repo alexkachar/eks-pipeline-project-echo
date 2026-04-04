@@ -3,3 +3,13 @@ environment   = "dev"
 project       = "todo-app"
 cluster_name  = "todo-app-dev"
 developer_ip  = "YOUR_PUBLIC_IP/32"  # curl -s https://checkip.amazonaws.com
+
+arc_github_config_url           = "https://github.com/YOUR_ORG/YOUR_REPO"
+arc_runner_scale_set_name       = "YOUR_REPO_NAME"
+arc_github_token_parameter_name = "/todo-app/dev/github/pat"
+
+# Leave empty for Phase 1 apply. After running helm install and the ALB is
+# provisioned, fill in the value from:
+#   kubectl get ingress -n todo-app -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}'
+# Then re-run terraform apply to create the Route 53 record.
+alb_dns_name = ""

@@ -99,7 +99,9 @@ terraform/
 
 ## Networking
 
-The VPC contains 6 subnets across 2 Availability Zones: 2 public (for the ALB), 2 private (for EKS worker nodes), and 2 database (for RDS). There is no NAT Gateway. Instead, all AWS service communication from private subnets goes through VPC Endpoints, keeping traffic on the AWS backbone network. The endpoints cover ECR (API + DKR), S3, EKS, EC2, STS, SSM (3 endpoints for Session Manager), and CloudWatch Logs.
+The VPC contains 6 subnets across 2 Availability Zones: 2 public (for the ALB), 2 private (for EKS worker nodes), and 2 database (for RDS).
+
+VPC Endpoints handle all AWS service traffic from private subnets — ECR (API + DKR), S3, EKS, EC2, STS, SSM (3 endpoints for Session Manager), and CloudWatch Logs — keeping that traffic on the AWS backbone network. A single NAT Gateway in AZ-0 provides outbound internet access for pulling images from public registries (ghcr.io, docker.io) that are not reachable via VPC endpoints.
 
 ## EKS cluster access
 
@@ -140,7 +142,7 @@ The **kube-prometheus-stack** Helm chart provides Prometheus, Grafana, and Alert
 ## Security highlights
 
 - **Private worker nodes** — no public IPs, no inbound ports, SSM-only access
-- **No NAT Gateway** — VPC Endpoints eliminate internet-routed traffic for AWS services
+- **VPC Endpoints for all AWS services** — ECR, S3, SSM, STS, EKS, CloudWatch traffic never leaves the AWS backbone
 - **IRSA for all service accounts** — ESO, ALB Controller, ARC runners authenticate to AWS without static keys
 - **OIDC federation** — GitHub Actions authenticates to AWS without long-lived credentials
 - **Database isolation** — RDS in dedicated subnets, security group restricted to private subnet CIDRs
@@ -151,30 +153,59 @@ The **kube-prometheus-stack** Helm chart provides Prometheus, Grafana, and Alert
 
 This project is designed to be created and destroyed with Terraform for each working session rather than running continuously.
 
+Typical hourly cost while running: approximately $0.35/hour (EKS control plane + 2× t3.large nodes + RDS + VPC endpoints + NAT Gateway). AWS account credits offset these costs.
+
+## Destroying the stack
+
+**Do not run `terraform destroy` directly.** The ALB is created by the ALB Controller from the Kubernetes Ingress and is not in Terraform state. Destroying the cluster while the ALB still exists will cause the VPC delete to fail.
+
+Use the provided script instead:
+
 ```bash
-# Start a session
-terraform apply
-
-# Work on the project...
-
-# End the session
-terraform destroy
+./destroy.sh
 ```
 
-Typical hourly cost while running: approximately $0.30/hour (EKS control plane + 2× t3.large nodes + RDS + VPC endpoints). AWS account credits offset these costs.
+The script: uninstalls the `todo-app` Helm release → waits for the ALB Controller to delete the ALB → clears `alb_dns_name` in tfvars → runs `terraform destroy`.
 
-## Bootstrap sequence
+## Bootstrap sequence (fresh recreate)
 
-A single `terraform apply` provisions the entire stack:
+The full stack requires two phases after a `terraform apply`.
 
-1. VPC, subnets, internet gateway, VPC endpoints
-2. ECR repositories
-3. EKS cluster (public+private endpoint, CIDR-restricted)
-4. RDS PostgreSQL instance + SSM parameters for credentials
-5. Helm releases: AWS Load Balancer Controller, ARC, ESO, kube-prometheus-stack
-6. Route 53 alias record pointing `todo.alexanderkachar.com` → ALB
+### Phase 1 — infrastructure
 
-After Terraform completes, a push to `main` triggers the first CI/CD run via ARC, which builds and deploys the application.
+```bash
+cd terraform/environments/dev
+terraform apply
+```
+
+Provisions: VPC + subnets + NAT + endpoints → ECR repos → EKS cluster → RDS + SSM parameters → Helm addon releases (ALB Controller, ARC, ESO, kube-prometheus-stack).
+
+After apply completes:
+
+```bash
+# Update kubeconfig
+aws eks update-kubeconfig --name todo-app-dev --region eu-central-1
+
+# Build and push the custom ARC runner image (ECR was empty after recreate)
+./bootstrap-runner-image.sh
+```
+
+### Phase 2 — first application deploy
+
+```bash
+helm install todo-app ./k8s/helm/todo-app -n todo-app --create-namespace
+```
+
+Wait ~2 minutes for the ALB Controller to provision the ALB, then capture its DNS name and wire up Route 53:
+
+```bash
+ALB_DNS=$(kubectl get ingress -n todo-app -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')
+echo "alb_dns_name = \"$ALB_DNS\""
+# Paste the above line into terraform/environments/dev/terraform.tfvars, then:
+terraform apply
+```
+
+After Phase 2, all subsequent deploys are fully automated — a push to `main` triggers CI/CD via ARC.
 
 ## Prerequisites
 

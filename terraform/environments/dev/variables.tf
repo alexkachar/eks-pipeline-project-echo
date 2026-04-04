@@ -39,7 +39,8 @@ variable "app_hostname" {
 
 variable "alb_dns_name" {
   type        = string
-  description = "ALB DNS name output by the ALB Controller after first helm install (kubectl get ingress -n todo-app)"
+  default     = ""
+  description = "ALB DNS name output by the ALB Controller after first helm install (kubectl get ingress -n todo-app). Leave empty on Phase 1 apply; fill in and re-apply for Phase 2 to create the Route 53 record."
 }
 
 # ── ARC (Actions Runner Controller) ───────────────────────────────────────────

@@ -33,7 +33,11 @@ module "rds" {
   db_username          = "todos"
 }
 
+# Route 53 is only applied once the ALB DNS name is known (Phase 2 of bootstrap).
+# Leave alb_dns_name empty in tfvars during Phase 1; fill it in after the first
+# helm install, then re-run terraform apply to create the DNS record.
 module "route53" {
+  count  = var.alb_dns_name != "" ? 1 : 0
   source = "../../modules/route53"
 
   zone_id      = var.route53_zone_id
