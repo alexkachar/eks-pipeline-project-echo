@@ -33,6 +33,17 @@ module "rds" {
   db_username          = "todos"
 }
 
+module "route53" {
+  source = "../../modules/route53"
+
+  zone_id      = var.route53_zone_id
+  record_name  = var.app_hostname
+  alb_dns_name = var.alb_dns_name
+  # Fixed ALB hosted zone ID for eu-central-1
+  # https://docs.aws.amazon.com/general/latest/gr/elb.html
+  alb_zone_id  = "Z215JYRZR1TBD5"
+}
+
 module "vpc" {
   source = "../../modules/vpc"
 

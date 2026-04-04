@@ -23,6 +23,25 @@ variable "developer_ip" {
   description = "Developer's public IP in CIDR notation — restricts EKS public API endpoint access"
 }
 
+# ── Route 53 / DNS ────────────────────────────────────────────────────────────
+
+variable "route53_zone_id" {
+  type        = string
+  description = "Route 53 hosted zone ID for alexanderkachar.com"
+  default     = "Z02945612K9BSDVBK5OTN"
+}
+
+variable "app_hostname" {
+  type        = string
+  description = "Fully qualified hostname for the app"
+  default     = "todo.alexanderkachar.com"
+}
+
+variable "alb_dns_name" {
+  type        = string
+  description = "ALB DNS name output by the ALB Controller after first helm install (kubectl get ingress -n todo-app)"
+}
+
 # ── ARC (Actions Runner Controller) ───────────────────────────────────────────
 
 variable "arc_github_config_url" {

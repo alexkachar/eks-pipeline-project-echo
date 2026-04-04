@@ -1,0 +1,55 @@
+# ── Image ──────────────────────────────────────────────────────────────────────
+image:
+  # ECR registry base URL — no trailing slash
+  registry: 038526103886.dkr.ecr.eu-central-1.amazonaws.com
+  pullPolicy: Always
+
+# ── Backend (Express) ──────────────────────────────────────────────────────────
+backend:
+  image:
+    repository: todo-app-backend
+    tag: latest
+  replicaCount: 2
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# ── Frontend (Nginx + React) ───────────────────────────────────────────────────
+frontend:
+  image:
+    repository: todo-app-frontend
+    tag: latest
+  replicaCount: 2
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# ── Ingress (ALB) ──────────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  host: todo.alexanderkachar.com
+  # ACM certificate ARN — must be in eu-central-1 (same region as the ALB).
+  # The existing *.alexanderkachar.com cert is in us-east-1; provision a new one
+  # in eu-central-1 and paste its ARN here before running helm install.
+  certificateArn: "arn:aws:acm:eu-central-1:038526103886:certificate/ceaf3854-8eca-4cf8-8e9b-f72be71fe457"
+
+# ── External Secrets ───────────────────────────────────────────────────────────
+externalSecret:
+  refreshInterval: 1h
+  # ClusterSecretStore created by Stage 5 Terraform
+  secretStoreName: aws-ssm
+  # SSM parameter prefix — no trailing slash.
+  # Parameters expected: <prefix>/db-host, /db-port, /db-name, /db-user, /db-password
+  parameterPrefix: /todo-app/dev
+  # Name of the Kubernetes Secret that ESO will create
+  secretName: todo-app-db-credentials

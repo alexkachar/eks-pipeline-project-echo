@@ -10,6 +10,9 @@ const pool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  // RDS requires SSL; rejectUnauthorized:false accepts the AWS-managed cert
+  // without needing to bundle the RDS CA. Set DB_SSL=false for local dev.
+  ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
 });
 
 // Health check

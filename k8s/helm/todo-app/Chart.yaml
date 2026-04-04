@@ -1,0 +1,6 @@
+apiVersion: v2
+name: todo-app
+description: Full-stack Todo application — React frontend + Express backend + RDS PostgreSQL
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
